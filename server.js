@@ -18,16 +18,23 @@ connection.connect()
 app.use(express.json())
 
 app.get('/api/players/:name', (req, res) => {
-  connection.query('SELECT uuid, name, currentDungeon, deepestDungeon, minDungeon FROM players WHERE name = ?', [req.params.name], (error, result) => {
+  connection.query('SELECT uuid, name, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players WHERE name = ?', [req.params.name], (error, result) => {
     if (error) throw error
     res.send(result)
   })
 })
 
 app.get('/api/players/:name/guard', (req, res) => {
-  connection.query('SELECT uuid, name, currentDungeon, deepestDungeon, minDungeon FROM players p JOIN (SELECT MAX(deepestDungeon) as maxDeepestDungeon FROM players) m WHERE name != ? AND p.deepestDungeon = m.maxDeepestDungeon', [req.params.name], (error, result) => {
+  connection.query('SELECT uuid, name, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players p JOIN (SELECT MAX(deepestDungeon) as maxDeepestDungeon FROM players) m WHERE name != ? AND p.deepestDungeon = m.maxDeepestDungeon', [req.params.name], (error, result) => {
     if (error) throw error
     res.send(result[0])
+  })
+})
+
+app.get('/api/leaderboard', (req, res) => {
+  connection.query('SELECT name, deepestDungeon, xp, enemiesKilled FROM players ORDER BY deepestDungeon DESC, xp DESC', (error, result) => {
+    if (error) throw error
+    res.send(result)
   })
 })
 
@@ -35,7 +42,7 @@ app.post('/api/login', (req, res) => {
   const name = req.body.name
   const password = crypto.createHash('sha256').update(req.body.password).digest('hex')
 
-  connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon FROM players WHERE name = ?', [name], (error, result) => {
+  connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players WHERE name = ?', [name], (error, result) => {
     if (error) throw error
     if (result.length) {
       // check password
@@ -55,7 +62,7 @@ app.post('/api/login', (req, res) => {
           if (error) throw error
           if (result) {
             // account created
-            connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon FROM players WHERE name = ?', [name], (error, result) => {
+            connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players WHERE name = ?', [name], (error, result) => {
               if (error) throw error
               res.send(result[0])
             })
@@ -72,10 +79,16 @@ app.post('/api/save', (req, res) => {
   const currentDungeon = req.body.currentDungeon
   const deepestDungeon = req.body.deepestDungeon
   const minDungeon = req.body.minDungeon
+  const items = req.body.items
+  const maxHealth = req.body.maxHealth
+  const maxMana = req.body.maxMana
+  const damage = req.body.damage
+  const xp = req.body.xp
+  const enemiesKilled = req.body.enemiesKilled
 
   connection.query(
-    'UPDATE players SET currentDungeon = ?, deepestDungeon = ?, minDungeon = ? WHERE name = ? AND password = ?',
-    [currentDungeon, deepestDungeon, minDungeon, name, password],
+    'UPDATE players SET currentDungeon = ?, deepestDungeon = ?, minDungeon = ?, items = ?, maxHealth = ?, maxMana = ?, damage = ?, xp = ?, enemiesKilled = ? WHERE name = ? AND password = ?',
+    [currentDungeon, deepestDungeon, minDungeon, JSON.stringify(items), maxHealth, maxMana, damage, xp, enemiesKilled, name, password],
     (error, result) => {
       if (error) throw error
       res.sendStatus(result.affectedRows ? 200 : 401)
