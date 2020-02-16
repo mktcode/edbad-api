@@ -42,7 +42,7 @@ app.post('/api/login', (req, res) => {
   const name = req.body.name
   const password = crypto.createHash('sha256').update(req.body.password).digest('hex')
 
-  connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players WHERE name = ?', [name], (error, result) => {
+  connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled, narratorSaid FROM players WHERE name = ?', [name], (error, result) => {
     if (error) throw error
     if (result.length) {
       // check password
@@ -62,7 +62,7 @@ app.post('/api/login', (req, res) => {
           if (error) throw error
           if (result) {
             // account created
-            connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players WHERE name = ?', [name], (error, result) => {
+            connection.query('SELECT uuid, name, password, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled, narratorSaid FROM players WHERE name = ?', [name], (error, result) => {
               if (error) throw error
               res.send(result[0])
             })
@@ -85,10 +85,11 @@ app.post('/api/save', (req, res) => {
   const damage = req.body.damage
   const xp = req.body.xp
   const enemiesKilled = req.body.enemiesKilled
+  const narratorSaid = req.body.narratorSaid
 
   connection.query(
-    'UPDATE players SET currentDungeon = ?, deepestDungeon = ?, minDungeon = ?, items = ?, maxHealth = ?, maxMana = ?, damage = ?, xp = ?, enemiesKilled = ? WHERE name = ? AND password = ?',
-    [currentDungeon, deepestDungeon, minDungeon, JSON.stringify(items), maxHealth, maxMana, damage, xp, enemiesKilled, name, password],
+    'UPDATE players SET currentDungeon = ?, deepestDungeon = ?, minDungeon = ?, items = ?, maxHealth = ?, maxMana = ?, damage = ?, xp = ?, enemiesKilled = ?, narratorSaid = ? WHERE name = ? AND password = ?',
+    [currentDungeon, deepestDungeon, minDungeon, JSON.stringify(items), maxHealth, maxMana, damage, xp, enemiesKilled, JSON.stringify(narratorSaid), name, password],
     (error, result) => {
       if (error) throw error
       res.sendStatus(result.affectedRows ? 200 : 401)
