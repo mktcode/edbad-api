@@ -2,9 +2,12 @@ require('dotenv').config()
 const express = require('express')
 const mysql = require('mysql')
 const crypto = require('crypto')
-const uuidv4 = require('uuid/v4');
+const uuidv4 = require('uuid/v4')
+const cors = require('cors')
 
 const app = express()
+app.use(express.json())
+app.use(cors())
 const port = 3000
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -12,10 +15,7 @@ const connection = mysql.createConnection({
   password: process.env.DB_PASS,
   database: process.env.DB_NAME
 })
-
 connection.connect()
-
-app.use(express.json())
 
 app.get('/api/players/:name', (req, res) => {
   connection.query('SELECT uuid, name, currentDungeon, deepestDungeon, minDungeon, items, maxHealth, maxMana, damage, xp, enemiesKilled FROM players WHERE name = ?', [req.params.name], (error, result) => {
